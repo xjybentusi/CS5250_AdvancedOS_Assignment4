@@ -10,6 +10,7 @@ Output files:
     SJF.txt
 '''
 import sys
+import copy
 
 input_file = 'input.txt'
 
@@ -19,6 +20,8 @@ class Process:
         self.id = id
         self.arrive_time = arrive_time
         self.burst_time = burst_time
+        self.orig_burst_time = copy.deepcopy(burst_time) #used in rr
+        self.last_preemptive_time = -10
     #for printing purpose
     def __repr__(self):
         return ('[id %d : arrival_time %d,  burst_time %d]'%(self.id, self.arrive_time, self.burst_time))
@@ -40,8 +43,52 @@ def FCFS_scheduling(process_list):
 #Input: process_list, time_quantum (Positive Integer)
 #Output_1 : Schedule list contains pairs of (time_stamp, proccess_id) indicating the time switching to that proccess_id
 #Output_2 : Average Waiting Time
+#Assume: new process have higher priority than pre-emptive task if two are appended to process_Q at the same time
+#Assume: old process id =1 does not join new process id = 1 even if two are neighbors in process_Q
 def RR_scheduling(process_list, time_quantum ):
-    return (["to be completed, scheduling process_list on round robin policy with time_quantum"], 0.0)
+    process_list2 = copy.deepcopy(process_list)
+    current_time = 0
+    process_Q = []
+    schedule = []
+    waiting_time = 0
+    while True:
+        schedule.append('current time in the begining is %d'%(current_time))
+        for process in list(process_list2):
+            if (process.arrive_time <= current_time):
+                process_Q.append(process)
+                #schedule.append('process id %d added to Q at time %d'%(process.id,current_time))
+                process_list2.remove(process)
+        if (len(process_Q) != 0):
+            for process in process_Q:
+                schedule.append('Process Q contains %d %d'%(process.id, process.burst_time))
+            process_ = process_Q.pop(0)
+            if (process_.last_preemptive_time != current_time - time_quantum): #the process_ is scheduled in the last round
+                schedule.append((current_time,process_.id))
+            if (process_.burst_time > time_quantum):
+                process_.burst_time = process_.burst_time - time_quantum
+                current_time = current_time + time_quantum
+                process_.last_preemptive_time = current_time
+                schedule.append('current time is %d'%(current_time))
+                for process in list(process_list2):
+                    #schedule.append('process in process_list2 %d %d'%(process.id,process.arrive_time))
+                    if (process.arrive_time <= current_time):
+                        process_Q.append(process)
+                        schedule.append('process id %d added to Q at time %d'%(process.id,current_time))
+                        process_list2.remove(process)
+                process_Q.append(process_)
+            else: #process_ end here
+                schedule.append('process %d end here'%(process_.id))
+                delta_time = process_.burst_time
+                current_time = current_time + delta_time
+                waiting_time = (current_time - process_.arrive_time - process_.orig_burst_time) + waiting_time
+        if (len(process_Q) == 0 and len(process_list2) == 0 ):
+            schedule.append('RR ended')
+            break
+        if (len(process_Q) == 0 and len(process_list2) != 0 ):
+            schedule.append('RR wait for the next process arrival')
+            current_time = process_list2[0].arrive_time
+    average_waiting_time = waiting_time/float(len(process_list))
+    return schedule, average_waiting_time
 
 def SRTF_scheduling(process_list):
     return (["to be completed, scheduling process_list on SRTF, using process.burst_time to calculate the remaining time of the current process "], 0.0)
