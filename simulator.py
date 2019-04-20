@@ -22,7 +22,8 @@ class Process:
         self.arrive_time = arrive_time
         self.burst_time = burst_time
         self.orig_burst_time = copy.deepcopy(burst_time) #used in rr
-        self.last_preemptive_time = -10
+        self.last_preemptive_time = -10 #used to check if the process is the last process scheduled
+        self.prediction = 0
     #for printing purpose
     def __repr__(self):
         return ('[id %d : arrival_time %d,  burst_time %d]'%(self.id, self.arrive_time, self.burst_time))
@@ -139,8 +140,51 @@ def SRTF_scheduling(process_list):
     return schedule, average_waiting_time
 
 def SJF_scheduling(process_list, alpha):
-    return (["to be completed, scheduling SJF without using information from process.burst_time"],0.0)
-
+#when 2 processes have the same guess, the one with earlier arrival time get scheduled first
+    process_list2 = copy.deepcopy(process_list)
+    current_time = 0
+    process_Q = []
+    schedule = []
+    waiting_time = 0
+    record_table = [[0,0,0],[1,0,0],[2,0,0],[3,0,0]] #id, actual, last prediction
+    def get_prediction(record_table, id):
+        if (record_table[id][1] == 0):
+            return 5
+        else:
+            schedule.append('prediction is %.2f'%((float)(alpha*record_table[id][1]+(1-alpha)*record_table[id][2])))
+            return float(float(alpha)*float(record_table[id][1])+float((1-alpha))*float(record_table[id][2]))
+    def update_record_table(process_):
+        record_table[process_.id][1]=process_.burst_time
+        record_table[process_.id][2]=process_.prediction
+    while True:
+        schedule.append('current time in the begining is %d'%(current_time))
+        for process in list(process_list2):
+            if (process.arrive_time <= current_time):
+                process.prediction = get_prediction(record_table,process.id)
+                process_Q.append(process)
+                #schedule.append('process id %d added to Q at time %d'%(process.id,current_time))
+                process_list2.remove(process)
+        if (len(process_Q) == 0 and len(process_list2) == 0 ):
+            schedule.append('RR ended')
+            break
+        if (len(process_Q) == 0 and len(process_list2) != 0 ):
+            schedule.append('RR wait for the next process arrival')
+            current_time = process_list2[0].arrive_time
+        if (len(process_Q) != 0):
+            process_Q.sort(key=operator.attrgetter('prediction'))
+            for process in process_Q:
+                schedule.append('Process Q contains %d %d %.2f'%(process.id, process.burst_time, process.prediction))
+            process_ = process_Q.pop(0)
+            update_record_table(process_)
+            if (process_.last_preemptive_time != current_time): #the process_ is scheduled in the last round
+                schedule.append((current_time,process_.id))
+            schedule.append('process %d end here'%(process_.id))
+            delta_time = process_.burst_time
+            current_time = current_time + delta_time
+            waiting_time = (current_time - process_.arrive_time - process_.orig_burst_time) + waiting_time
+        
+    average_waiting_time = waiting_time/float(len(process_list))
+    return schedule, average_waiting_time
 
 def read_input():
     result = []
