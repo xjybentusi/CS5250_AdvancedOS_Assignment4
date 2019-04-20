@@ -11,6 +11,7 @@ Output files:
 '''
 import sys
 import copy
+import operator
 
 input_file = 'input.txt'
 
@@ -91,7 +92,51 @@ def RR_scheduling(process_list, time_quantum ):
     return schedule, average_waiting_time
 
 def SRTF_scheduling(process_list):
-    return (["to be completed, scheduling process_list on SRTF, using process.burst_time to calculate the remaining time of the current process "], 0.0)
+    process_list2 = copy.deepcopy(process_list)
+    current_time = 0
+    process_Q = []
+    schedule = []
+    waiting_time = 0
+    duration =0
+    while True:
+        schedule.append('current time in the begining is %d'%(current_time))
+        if (len(process_list2)==0):
+            process_Q.sort(key=operator.attrgetter('burst_time'))
+            duration=process_Q[0].burst_time
+        for process in list(process_list2):
+            if (process.arrive_time <= current_time):
+                process_Q.append(process)
+                #schedule.append('process id %d added to Q at time %d'%(process.id,current_time))
+                process_list2.remove(process)
+            else:
+                duration=process.arrive_time-current_time #time to devoted to one process before next check
+                break
+        if (len(process_Q) != 0):
+            process_Q.sort(key=operator.attrgetter('burst_time'))
+            for process in process_Q:
+                schedule.append('Process Q contains %d %d'%(process.id, process.burst_time))
+            process_ = process_Q.pop(0)
+            schedule.append('duration is %d'%(duration))
+            if (process_.last_preemptive_time != current_time): #the process_ is scheduled in the last round
+                schedule.append((current_time,process_.id))
+            if (process_.burst_time > duration):
+                process_.burst_time = process_.burst_time - duration
+                current_time = current_time + duration
+                process_.last_preemptive_time = current_time
+                process_Q.append(process_)
+            else: #process_ end here
+                schedule.append('process %d end here'%(process_.id))
+                delta_time = process_.burst_time
+                current_time = current_time + delta_time
+                waiting_time = (current_time - process_.arrive_time - process_.orig_burst_time) + waiting_time
+        if (len(process_Q) == 0 and len(process_list2) == 0 ):
+            schedule.append('RR ended')
+            break
+        if (len(process_Q) == 0 and len(process_list2) != 0 ):
+            schedule.append('RR wait for the next process arrival')
+            current_time = process_list2[0].arrive_time
+    average_waiting_time = waiting_time/float(len(process_list))
+    return schedule, average_waiting_time
 
 def SJF_scheduling(process_list, alpha):
     return (["to be completed, scheduling SJF without using information from process.burst_time"],0.0)
