@@ -58,7 +58,7 @@ def RR_scheduling(process_list, time_quantum ):
         for process in list(process_list2):
             if (process.arrive_time <= current_time):
                 process_Q.append(process)
-                #schedule.append('process id %d added to Q at time %d'%(process.id,current_time))
+                schedule.append('process id %d added to Q at time %d, burst time=%d'%(process.id,current_time,process.burst_time))
                 process_list2.remove(process)
         if (len(process_Q) != 0):
             for process in process_Q:
@@ -83,12 +83,14 @@ def RR_scheduling(process_list, time_quantum ):
                 delta_time = process_.burst_time
                 current_time = current_time + delta_time
                 waiting_time = (current_time - process_.arrive_time - process_.orig_burst_time) + waiting_time
+                schedule.append('total waiting time is %d'%(waiting_time))
         if (len(process_Q) == 0 and len(process_list2) == 0 ):
             schedule.append('RR ended')
             break
         if (len(process_Q) == 0 and len(process_list2) != 0 ):
-            schedule.append('RR wait for the next process arrival')
-            current_time = process_list2[0].arrive_time
+            if (current_time<process_list2[0].arrive_time):
+                schedule.append('RR wait for the next process arrival')
+                current_time = process_list2[0].arrive_time
     average_waiting_time = waiting_time/float(len(process_list))
     return schedule, average_waiting_time
 
@@ -202,6 +204,10 @@ def write_output(file_name, schedule, avg_waiting_time):
             f.write(str(item) + '\n')
         f.write('average waiting time %.2f \n'%(avg_waiting_time))
 
+def write_output_rr(file_name, quantum, avg_waiting_time):
+    with open(file_name,'w') as f:
+        f.write('%.2f, average waiting time %.2f \n'%(quantum,avg_waiting_time))
+
 
 def main(argv):
     process_list = read_input()
@@ -220,6 +226,19 @@ def main(argv):
     print ("simulating SJF ----")
     SJF_schedule, SJF_avg_waiting_time =  SJF_scheduling(process_list, alpha = 0.5)
     write_output('SJF.txt', SJF_schedule, SJF_avg_waiting_time )
+#find out optimal time quantum
+    print ("finding optimal quantum ----")
+    i=0.1 
+    while (i<=16):
+        RR_schedule, RR_avg_waiting_time2 =  RR_scheduling(process_list,time_quantum = i)
+        print ("(%.2f,  %.2f)"%(i,RR_avg_waiting_time2))
+        i=i+0.1
+#find out optimal alpha
+    i=0.05
+    while(i<=1.05):
+        SJF_schedule, SJF_avg_waiting_time =  SJF_scheduling(process_list, alpha = i)
+        print ("(%.2f,  %.2f)"%(i,SJF_avg_waiting_time))
+        i=i+0.05
 
 if __name__ == '__main__':
     main(sys.argv[1:])
