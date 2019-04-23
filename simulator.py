@@ -54,42 +54,43 @@ def RR_scheduling(process_list, time_quantum ):
     schedule = []
     waiting_time = 0
     while True:
-        schedule.append('current time in the begining is %d'%(current_time))
+        #schedule.append('current time in the begining is %d'%(current_time))
         for process in list(process_list2):
             if (process.arrive_time <= current_time):
                 process_Q.append(process)
-                schedule.append('process id %d added to Q at time %d, burst time=%d'%(process.id,current_time,process.burst_time))
+                #schedule.append('process id %d added to Q at time %d, burst time=%d'%(process.id,current_time,process.burst_time))
                 process_list2.remove(process)
         if (len(process_Q) != 0):
-            for process in process_Q:
-                schedule.append('Process Q contains %d %d'%(process.id, process.burst_time))
+            #for process in process_Q:
+                #schedule.append('Process Q contains %d %d'%(process.id, process.burst_time))
             process_ = process_Q.pop(0)
-            if (process_.last_preemptive_time != current_time - time_quantum): #the process_ is scheduled in the last round
+            #schedule.append('popped process last preemptive time is %d'%(process_.last_preemptive_time))
+            if (process_.last_preemptive_time != current_time): #the process_ is scheduled in the last round
                 schedule.append((current_time,process_.id))
             if (process_.burst_time > time_quantum):
                 process_.burst_time = process_.burst_time - time_quantum
                 current_time = current_time + time_quantum
                 process_.last_preemptive_time = current_time
-                schedule.append('current time is %d'%(current_time))
+                #schedule.append('current time is %d'%(current_time))
                 for process in list(process_list2):
                     #schedule.append('process in process_list2 %d %d'%(process.id,process.arrive_time))
                     if (process.arrive_time <= current_time):
                         process_Q.append(process)
-                        schedule.append('process id %d added to Q at time %d'%(process.id,current_time))
+                        #schedule.append('process id %d added to Q at time %d'%(process.id,current_time))
                         process_list2.remove(process)
                 process_Q.append(process_)
             else: #process_ end here
-                schedule.append('process %d end here'%(process_.id))
+                #schedule.append('process %d end here'%(process_.id))
                 delta_time = process_.burst_time
                 current_time = current_time + delta_time
                 waiting_time = (current_time - process_.arrive_time - process_.orig_burst_time) + waiting_time
-                schedule.append('total waiting time is %d'%(waiting_time))
+                #schedule.append('total waiting time is %d'%(waiting_time))
         if (len(process_Q) == 0 and len(process_list2) == 0 ):
-            schedule.append('RR ended')
+            #schedule.append('RR ended')
             break
         if (len(process_Q) == 0 and len(process_list2) != 0 ):
             if (current_time<process_list2[0].arrive_time):
-                schedule.append('RR wait for the next process arrival')
+                #schedule.append('RR wait for the next process arrival')
                 current_time = process_list2[0].arrive_time
     average_waiting_time = waiting_time/float(len(process_list))
     return schedule, average_waiting_time
@@ -102,7 +103,7 @@ def SRTF_scheduling(process_list):
     waiting_time = 0
     duration =0
     while True:
-        schedule.append('current time in the begining is %d'%(current_time))
+        #schedule.append('current time in the begining is %d'%(current_time))
         if (len(process_list2)==0):
             process_Q.sort(key=operator.attrgetter('burst_time'))
             duration=process_Q[0].burst_time
@@ -116,10 +117,10 @@ def SRTF_scheduling(process_list):
                 break
         if (len(process_Q) != 0):
             process_Q.sort(key=operator.attrgetter('burst_time'))
-            for process in process_Q:
-                schedule.append('Process Q contains %d %d'%(process.id, process.burst_time))
+            #for process in process_Q:
+                #schedule.append('Process Q contains %d %d'%(process.id, process.burst_time))
             process_ = process_Q.pop(0)
-            schedule.append('duration is %d'%(duration))
+            #schedule.append('duration is %d'%(duration))
             if (process_.last_preemptive_time != current_time): #the process_ is scheduled in the last round
                 schedule.append((current_time,process_.id))
             if (process_.burst_time > duration):
@@ -128,15 +129,15 @@ def SRTF_scheduling(process_list):
                 process_.last_preemptive_time = current_time
                 process_Q.append(process_)
             else: #process_ end here
-                schedule.append('process %d end here'%(process_.id))
+                #schedule.append('process %d end here'%(process_.id))
                 delta_time = process_.burst_time
                 current_time = current_time + delta_time
                 waiting_time = (current_time - process_.arrive_time - process_.orig_burst_time) + waiting_time
         if (len(process_Q) == 0 and len(process_list2) == 0 ):
-            schedule.append('RR ended')
+            #schedule.append('RR ended')
             break
         if (len(process_Q) == 0 and len(process_list2) != 0 ):
-            schedule.append('RR wait for the next process arrival')
+            #schedule.append('RR wait for the next process arrival')
             current_time = process_list2[0].arrive_time
     average_waiting_time = waiting_time/float(len(process_list))
     return schedule, average_waiting_time
@@ -153,13 +154,13 @@ def SJF_scheduling(process_list, alpha):
         if (record_table[id][1] == 0):
             return 5
         else:
-            schedule.append('prediction is %.2f'%((float)(alpha*record_table[id][1]+(1-alpha)*record_table[id][2])))
+            #schedule.append('prediction is %.2f'%((float)(alpha*record_table[id][1]+(1-alpha)*record_table[id][2])))
             return float(float(alpha)*float(record_table[id][1])+float((1-alpha))*float(record_table[id][2]))
     def update_record_table(process_):
         record_table[process_.id][1]=process_.burst_time
         record_table[process_.id][2]=process_.prediction
     while True:
-        schedule.append('current time in the begining is %d'%(current_time))
+        #schedule.append('current time in the begining is %d'%(current_time))
         for process in list(process_list2):
             if (process.arrive_time <= current_time):
                 process.prediction = get_prediction(record_table,process.id)
@@ -167,20 +168,20 @@ def SJF_scheduling(process_list, alpha):
                 #schedule.append('process id %d added to Q at time %d'%(process.id,current_time))
                 process_list2.remove(process)
         if (len(process_Q) == 0 and len(process_list2) == 0 ):
-            schedule.append('RR ended')
+            #schedule.append('RR ended')
             break
         if (len(process_Q) == 0 and len(process_list2) != 0 ):
-            schedule.append('RR wait for the next process arrival')
+            #schedule.append('RR wait for the next process arrival')
             current_time = process_list2[0].arrive_time
         if (len(process_Q) != 0):
             process_Q.sort(key=operator.attrgetter('prediction'))
-            for process in process_Q:
-                schedule.append('Process Q contains %d %d %.2f'%(process.id, process.burst_time, process.prediction))
+            #for process in process_Q:
+                #schedule.append('Process Q contains %d %d %.2f'%(process.id, process.burst_time, process.prediction))
             process_ = process_Q.pop(0)
             update_record_table(process_)
             if (process_.last_preemptive_time != current_time): #the process_ is scheduled in the last round
                 schedule.append((current_time,process_.id))
-            schedule.append('process %d end here'%(process_.id))
+            #schedule.append('process %d end here'%(process_.id))
             delta_time = process_.burst_time
             current_time = current_time + delta_time
             waiting_time = (current_time - process_.arrive_time - process_.orig_burst_time) + waiting_time
@@ -229,10 +230,10 @@ def main(argv):
 #find out optimal time quantum
     print ("finding optimal quantum ----")
     i=0.1 
-    while (i<=16):
+    while (i<=60):
         RR_schedule, RR_avg_waiting_time2 =  RR_scheduling(process_list,time_quantum = i)
         print ("(%.2f,  %.2f)"%(i,RR_avg_waiting_time2))
-        i=i+0.1
+        i=i+2
 #find out optimal alpha
     i=0.05
     while(i<=1.05):
